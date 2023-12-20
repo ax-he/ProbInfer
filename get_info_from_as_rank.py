@@ -30,13 +30,22 @@ def getHtml(url):
     html = BeautifulSoup(res.text,'html.parser')
     return html
 
+# def get_asn():
+#     asn_json = files_path + 'data/aspath/test/all_asn.json'
+#     fp = open(asn_json)
+#     json_str = ujson.load(fp)
+#     asn_dict = ujson.loads(json_str)
+#     fp.close()
+#     return list(asn_dict.keys())
+
 def get_asn():
-    asn_json = files_path + 'data/aspath/test/all_asn.json'
-    fp = open(asn_json)
-    json_str = ujson.load(fp)
-    asn_dict = ujson.loads(json_str)
-    fp.close()
-    return list(asn_dict.keys())
+    asn_json = '/u/yrm2kw/Desktop/files/data/aspath/test/all_asn.json'  # JSON 文件路径
+    with open(asn_json, 'r') as fp:
+        data = ujson.load(fp)  # 从文件加载 JSON 数据，这里假设是一个列表
+
+    # 从列表中的每个字典提取 'asn' 键的值
+    return [item['asn'] for item in data if 'asn' in item]
+
 
 def get_data_from_web(asn):
     url = 'http://as-rank.caida.org/asns/' + asn
