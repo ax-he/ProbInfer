@@ -8,19 +8,22 @@ down_bgp.py：DownLoad BGP data
 get_info_from_as_rank.py：Download data from ASRank
 
 3
-data_preprocessing：processing bgp raw data
+convert.py: Convert .jsonl to .json
 
 4
-get_ground_path.py：Obtain ground path
+data_preprocessing：processing bgp raw data
 
 5
-get_validate_data.py：get test and train data, find stitching points
+get_ground_path.py：Obtain ground path
 
 6
-multigraph_infer.py：build multigraph, classify candidate paths, process features, reappear hyperpath
+get_validate_data.py：get test and train data, find stitching points
 
 7
-regular.py：valley-free principle
+multigraph_infer.py：build multigraph, classify candidate paths, process features, reappear hyperpath
 
 8
+regular.py：valley-free principle
+
+9
 main.py
