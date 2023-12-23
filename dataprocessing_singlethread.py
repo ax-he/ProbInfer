@@ -338,6 +338,7 @@ def vantageAS2prefix(parent):    #每个vantage AS可以到达的前缀
         fp.close()
         
 def prefix2as():
+    # 没有找到对应的prefix2as.txt，从https://publicdata.caida.org/datasets/routing/routeviews-prefix2as/2023/12/下载
     prefix2as_file = files_path + 'data/aspath/prefix2as.txt'
     datafile = open(prefix2as_file, mode='r')
     prefix2as = datafile.read().splitlines()
@@ -345,7 +346,7 @@ def prefix2as():
     prefix2as_json = prefix2as_file = files_path + 'data/aspath/prefix2as.json'
     pre2as_dict = {}
     for row in prefix2as:
-        row = row.split(' ')
+        row = row.split('\t')
         prefix = row[0] + '/' + row[1]
         asn = row[2]
         pre2as_dict[prefix] = asn
@@ -417,52 +418,55 @@ def child(file):
     get_path_without_prefix(parent)
 
 
+def main():
+    # 需要分步完成，执行一步时另一部注释
+    # step 1
+    filetypes = ['.bz2', '.gz']
+    # filetypes = ['.gz']
+    for filetype in filetypes:
+        multi_process_GetASPathFromBGP(filetype)
+    
+    # step 2
+    aspath = files_path + 'data/aspath/bgp'
+    file_list = os.listdir(aspath)
+    multi_process(child, file_list, num_thread=4)
+
+
 # def main():
 #     filetypes = ['.bz2', '.gz']
-#     # filetypes = ['.gz']
+#     bgp_path = files_path + 'data/raw_data/bgp'
+#     aspath = files_path + 'data/aspath/bgp/'
+
+#     # 处理 BGP 文件
 #     for filetype in filetypes:
-#         multi_process_GetASPathFromBGP(filetype)
+#         file_list = []
+#         get_dir(bgp_path, file_list, filetype)
+#         for f in file_list:
+#             file = f[1]
+#             filename = file.split('/')[-1][:-len(filetype)]
+#             father_dir = f[0]
+#             save_dir = aspath + father_dir
+#             if not os.path.exists(save_dir):
+#                 os.makedirs(save_dir)
+#             save_path = save_dir + '/' + filename + '.csv'
+#             if not os.path.exists(save_path):
+#                 read_bgp([file, save_path])
 
-#     aspath = files_path + 'data/aspath/bgp'
-#     file_list = os.listdir(aspath)
-#     multi_process(child, file_list, num_thread=4)
+#     # 分析数据
+#     aspath_dir = files_path + 'data/aspath/bgp'
+#     file_list = os.listdir(aspath_dir)
+#     for file in file_list:
+#         parent = file
+#         if parent == '.DS_Store':
+#             continue
 
-
-def main():
-    filetypes = ['.bz2', '.gz']
-    bgp_path = files_path + 'data/raw_data/bgp'
-    aspath = files_path + 'data/aspath/bgp/'
-
-    # 处理 BGP 文件
-    for filetype in filetypes:
-        file_list = []
-        get_dir(bgp_path, file_list, filetype)
-        for f in file_list:
-            file = f[1]
-            filename = file.split('/')[-1][:-len(filetype)]
-            father_dir = f[0]
-            save_dir = aspath + father_dir
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
-            save_path = save_dir + '/' + filename + '.csv'
-            if not os.path.exists(save_path):
-                read_bgp([file, save_path])
-
-    # 分析数据
-    aspath_dir = files_path + 'data/aspath/bgp'
-    file_list = os.listdir(aspath_dir)
-    for file in file_list:
-        parent = file
-        if parent == '.DS_Store':
-            continue
-
-        print(parent)
-        get_basic_info(parent)
-        get_path_by_as(parent)
-        drop_duplicated_aspath(parent)
-        get_path_by_prefix(parent)
-        vantageAS2prefix(parent)
-        get_path_without_prefix(parent)
+#         print(parent)
+#         get_basic_info(parent)
+#         get_path_by_as(parent)
+#         drop_duplicated_aspath(parent)
+#         get_path_by_prefix(parent)
+#         vantageAS2prefix(parent)
+#         get_path_without_prefix(parent)
         
 # if __name__=="__main__":
 
