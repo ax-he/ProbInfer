@@ -5,7 +5,7 @@ Probability-Based AS Path Inference From Multigraph Perspective
 down_bgp.py：DownLoad BGP data
 
 2
-get_info_from_as_rank.py：Download data from ASRank
+get_asn_info.py：Download data from ASRank
 
 3
 convert.py: Convert .jsonl to .json
