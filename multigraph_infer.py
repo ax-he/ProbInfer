@@ -298,11 +298,16 @@ def process_feature3(data):    # 每条路径的属性在AS PAIR中是最大，�
 
 # types: Content-0|Enterprise-1|Transit/Access-2
 def as2types_dict():
-    as2typesp_file = files_path + 'data/aspath/20190901.as2types.txt'
+    # CAIDA has removed the download access from 2021.1, https://www.caida.org/catalog/datasets/request_user_info_forms/as_classification/
+    # download from https://github.com/jdelossantos22/ECE578_Project2
+    as2typesp_file = files_path + 'data/aspath/20210401.as2types.txt'
     df = pd.read_csv(as2typesp_file,names=['as2types'])
     as2types = df['as2types'].tolist()
     d ={}
     for r in as2types:
+        if r.startswith('#'):
+            # 跳过注释行
+            continue
         astype = r.split('|')[2]
         asn = r.split('|')[0]
         if astype == 'Content':
@@ -316,11 +321,15 @@ def as2types_dict():
     return d                
 
 def relationship_dict():     
-    as_relationship_file = files_path + 'data/aspath/20190901.as-rel.txt'
+    # download from https://publicdata.caida.org/datasets/as-relationships/serial-1/
+    as_relationship_file = files_path + 'data/aspath/20231201.as-rel.txt'
     df = pd.read_csv(as_relationship_file,names=['rel'])
     rel = df['rel'].tolist()
     d ={}
     for r in rel:
+        if r.startswith('#'):
+            # 跳过注释行
+            continue
         as1 = r.split('|')[0]
         as2 = r.split('|')[1]
         relationship = int(r.split('|')[2])
@@ -392,9 +401,9 @@ def geo_relation(as_rank_info,cc_dict,triplet):
     src_as = triplet[0]
     stitch_as = triplet[1]
     dst_as = triplet[2]
-    country_src = as_rank_info[src_as]['country']
-    country_stitch = as_rank_info[stitch_as]['country']
-    country_dst = as_rank_info[dst_as]['country']
+    country_src = as_rank_info[src_as]['country']['name']
+    country_stitch = as_rank_info[stitch_as]['country']['name']
+    country_dst = as_rank_info[dst_as]['country']['name']
     continent_src = cc_dict[country_src]
     continent_stitch = cc_dict[country_stitch]
     continent_dst = cc_dict[country_dst]
@@ -419,15 +428,15 @@ def geo_relation(as_rank_info,cc_dict,triplet):
                 rel = 7
     return rel
 
-
-
 def analyze_stitching_path(known_aspath,left_split_path, prefix2as, validate_aspath, multi_degree, as_rank_info, frequency_dict, rel_dict, as2type,
                            two_seg_key, joint_dir, current_dir):
     country2continent = files_path + 'data/aspath/country2continent.json'
-    fp = open(country2continent)
-    str_js = ujson.load(fp)  # 从文本中读取，str
-    cc_dict = ujson.loads(str_js)  # 国家对应的大洲
-    fp.close()
+    # fp = open(country2continent)
+    # str_js = ujson.load(fp)  # 从文本中读取，str
+    # cc_dict = ujson.loads(str_js)  # 国家对应的大洲
+    # fp.close()
+    with open(country2continent, 'r') as fp:
+        cc_dict = ujson.load(fp)
 
     unprocessed = []
 
@@ -517,24 +526,28 @@ def analyze_stitching_path(known_aspath,left_split_path, prefix2as, validate_asp
 
                     # degree = neighbor_num_dict[int(joint_point)]
                     try:
-                        stitch_global_degree = as_rank_info[joint_point]['degree']['globals']
+                        # stitch_global_degree = as_rank_info[joint_point]['degree']['globals']
+                        stitch_global_degree = as_rank_info[joint_point]['asnDegree']['total']
                     except:
                         stitch_global_degree = 0
                     mdegree = multi_degree[joint_point]
                     # tdegree = transit_degree[int(joint_point)]
                     try:
-                        tdegree = as_rank_info[joint_point]['degree']['transits']
+                        # tdegree = as_rank_info[joint_point]['degree']['transits']
+                        tdegree = as_rank_info[joint_point]['asnDegree']['transit']
                     except:
                         tdegree = 0
                     # second_as = int(ipath[1])
                     # second_degree = neighbor_num_dict[int(second_as)]
                     second_as = ipath[1]
                     try:
-                        sec_transit_degree = as_rank_info[second_as]['degree']['transits']
+                        # sec_transit_degree = as_rank_info[second_as]['degree']['transits']
+                        sec_transit_degree = as_rank_info[second_as]['asnDegree']['transit']
                     except:
                         sec_transit_degree = 0
                     try:
-                        sec_global_degree = as_rank_info[second_as]['degree']['globals']
+                        # sec_global_degree = as_rank_info[second_as]['degree']['globals']
+                        sec_global_degree = as_rank_info[second_as]['asnDegree']['total']
                     except:
                         sec_global_degree = 0
                     try:
@@ -687,32 +700,56 @@ def analyze_stitching_path(known_aspath,left_split_path, prefix2as, validate_asp
 
     return single_shortest_analyze_dict, multi_shortest_analyze_dict, mean_single_jaccard_by_length, mean_multi_jaccard_by_length
 
+# def country2continent(as_rank_info):
+#     country = []
+#     for key in as_rank_info.keys():
+#         name = as_rank_info[key]['country']
+#         if len(name) > 2:
+#             continue
+#         if name not in country:
+#             country.append(name)
+#     country2continent = files_path + 'data/aspath/country_continent.csv'
+#     df = pd.read_csv(country2continent,names=['1','2','continent','country'])
+#     cc_dict = {}
+#     cc_dict['NA'] = 'Africa'
+#     for row in df[['continent','country']].values.tolist():
+#         key = row[1]
+#         item = row[0]
+#         cc_dict[key] = item
+#     for c in country:
+#         try:
+#             cc_dict[c]
+#         except:
+#             print(c)
+#     cc_json = files_path + 'data/aspath/country2continent.json'
+#     fp = open(cc_json, 'w')
+#     json_str = ujson.dumps(cc_dict)
+#     ujson.dump(json_str, fp)
+#     fp.close()        
+
 def country2continent(as_rank_info):
-    country = []
-    for key in as_rank_info.keys():
-        name = as_rank_info[key]['country']
-        if len(name) > 2:
-            continue
-        if name not in country:
-            country.append(name)
+    country_codes = set()  # 使用集合来避免重复
+    for key, value in as_rank_info.items():
+        country_code = value.get('country', {}).get('name', None)
+        if country_code and len(country_code) == 2:
+            country_codes.add(country_code)
+
+    # 读取国家到大洲的映射
     country2continent = files_path + 'data/aspath/country_continent.csv'
-    df = pd.read_csv(country2continent,names=['1','2','continent','country'])
-    cc_dict = {}
-    cc_dict['NA'] = 'Africa'
-    for row in df[['continent','country']].values.tolist():
-        key = row[1]
-        item = row[0]
-        cc_dict[key] = item
-    for c in country:
-        try:
-            cc_dict[c]
-        except:
-            print(c)
+    df = pd.read_csv(country2continent, names=['1', '2', 'continent', 'country'])
+    cc_dict = {'NA': 'Africa'}  # 默认值
+    for _, row in df.iterrows():
+        cc_dict[row['country']] = row['continent']
+
+    # 检查是否所有国家代码都在映射中
+    for c in country_codes:
+        if c not in cc_dict:
+            print(f"Country code {c} not found in continent mapping.")
+
+    # 保存到JSON文件
     cc_json = files_path + 'data/aspath/country2continent.json'
-    fp = open(cc_json, 'w')
-    json_str = ujson.dumps(cc_dict)
-    ujson.dump(json_str, fp)
-    fp.close()        
+    with open(cc_json, 'w') as fp:
+        ujson.dump(cc_dict, fp)
 
 def multi_process(function,argc,num_thread):
     # 多线程下载
@@ -760,11 +797,14 @@ def child(para):
     multi_degree,G,known_aspath,left_split_path = get_basic_info(current_dir)
     print('get basic info successfully')
 
+    # as_rank_info_file = files_path + 'data/aspath/as_rank_info.json'
+    # fp = open(as_rank_info_file)
+    # str_js = ujson.load(fp)    #从文本中读取，str
+    # as_rank_info = ujson.loads(str_js)    #PREFIX属于的AS
+    # fp.close()
     as_rank_info_file = files_path + 'data/aspath/as_rank_info.json'
-    fp = open(as_rank_info_file)
-    str_js = ujson.load(fp)    #从文本中读取，str
-    as_rank_info = ujson.loads(str_js)    #PREFIX属于的AS
-    fp.close()
+    with open(as_rank_info_file, 'r') as fp:
+        as_rank_info = ujson.load(fp)  # 直接加载JSON数据
     print('get asrank successfully!')
     
     prefix2as_file = files_path + 'data/aspath/prefix2as.json'
@@ -800,6 +840,10 @@ def child(para):
         f.close()
         
         print('get validate data successfully')
+
+        # ****
+        country2continent(as_rank_info)
+        print('country2continent successfully')
 
         fp = open(result_file,'a')
         fp.write(row)
@@ -838,8 +882,10 @@ def child(para):
         print('multi_shortest_analyze_dict')
         print(multi_shortest_analyze_dict)
     
-# if __name__=="__main__":
-#     print('ssss')
+if __name__=="__main__":
+    print('ssss')
+    test_ratio = 0.2  # 示例测试比例
+    main(test_ratio)
 
 
 
