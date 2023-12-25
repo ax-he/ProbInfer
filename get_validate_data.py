@@ -211,6 +211,9 @@ def child(current_dir):
 
         get_common_neighbor(G,groud_path,as_prefix,validate_dir_child)
 
+if __name__ == "__main__":
+    main()
+
 # if __name__=="__main__":
 #     edges = get_edges()
 #     G = get_graph(edges)
