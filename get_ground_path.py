@@ -418,7 +418,9 @@ def main(test_ratio):
         para.append([file,test_ratio])
     multi_process(child,para)
 
-
+if __name__ == "__main__":
+    test_ratio = 0.2  # 示例测试比例
+    main(test_ratio)
 
 
 
